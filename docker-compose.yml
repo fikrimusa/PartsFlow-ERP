@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: partsflow-postgres
+    environment:
+      POSTGRES_DB: partsflowdb
+      POSTGRES_USER: partsflow_user
+      POSTGRES_PASSWORD: partsflow_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - partsflow_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  partsflow_postgres_data:

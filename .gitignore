@@ -1,0 +1,11 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# Node.js build output and dependencies
+frontend/partsflow-web/node_modules/
+frontend/partsflow-web/.next/
+
+# Local environment files
+.env
+.env.*

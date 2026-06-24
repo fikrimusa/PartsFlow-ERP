@@ -1,0 +1,291 @@
+# PartsFlow ERP Backend Notes
+
+## Backend folder: `backend/PartsFlow.Api`
+
+This is the server-side application. It receives requests from the frontend, performs application logic, communicates with PostgreSQL, and returns data—usually JSON.
+
+For example, later the frontend may request:
+
+```text
+GET /api/products
+```
+
+The backend will read products from PostgreSQL and return them to the frontend.
+
+Current structure:
+
+```text
+backend/PartsFlow.Api/
+├── Controllers/
+├── Data/
+├── DTOs/
+├── Migrations/
+├── Models/
+├── Services/
+├── Properties/
+├── Program.cs
+├── PartsFlow.Api.csproj
+├── appsettings.json
+└── appsettings.Development.json
+```
+
+## `Program.cs` — application starting point
+
+Think of `Program.cs` as the backend’s main control room.
+
+When you run:
+
+```bash
+dotnet run
+```
+
+.NET starts with `Program.cs`.
+
+It currently does four important things:
+
+1. Enables controllers.
+
+   ```csharp
+   builder.Services.AddControllers();
+   ```
+
+   This tells ASP.NET Core that API endpoints will be created inside the `Controllers` folder.
+
+2. Enables Swagger.
+
+   ```csharp
+   builder.Services.AddSwaggerGen();
+   ```
+
+   Swagger creates browser-based API documentation. It is why you can open `http://localhost:5000/swagger`.
+
+3. Configures the database connection.
+
+   ```csharp
+   builder.Services.AddDbContext<PartsFlowDbContext>(...);
+   ```
+
+   This connects Entity Framework Core to PostgreSQL using the connection string in `appsettings.json`.
+
+4. Maps controller routes.
+
+   ```csharp
+   app.MapControllers();
+   ```
+
+   This activates routes such as `/api/health`. Without this line, the `HealthController` would not be reachable.
+
+## `Controllers/` — API endpoints
+
+Controllers receive HTTP requests and return responses.
+
+Current file:
+
+```text
+Controllers/HealthController.cs
+```
+
+The health controller defines:
+
+```text
+GET /api/health
+```
+
+When someone visits that URL, it returns:
+
+```json
+{
+  "status": "ok",
+  "app": "PartsFlow.Api"
+}
+```
+
+A controller is similar to a receptionist: a request arrives, the controller determines what action should happen, and it returns a response.
+
+Later, this folder may contain:
+
+```text
+ProductsController.cs
+StockMovementsController.cs
+SalesOrdersController.cs
+AuthController.cs
+```
+
+For example:
+
+```text
+GET    /api/products        Get all products
+GET    /api/products/5      Get one product
+POST   /api/products        Create a product
+PUT    /api/products/5      Update a product
+DELETE /api/products/5      Delete a product
+```
+
+## `Data/` — database setup
+
+Current file:
+
+```text
+Data/PartsFlowDbContext.cs
+```
+
+`PartsFlowDbContext` is the connection point between C# and PostgreSQL.
+
+Entity Framework Core uses it to understand:
+
+- Which tables exist in the database
+- Which C# models represent those tables
+- How to save, update, and retrieve data
+
+Later it may conceptually contain:
+
+```csharp
+public DbSet<Product> Products { get; set; }
+public DbSet<StockMovement> StockMovements { get; set; }
+public DbSet<SalesOrder> SalesOrders { get; set; }
+```
+
+This would tell EF Core which C# objects belong to each PostgreSQL table. It is intentionally empty today because business tables have not been implemented.
+
+## `Models/` — database entities
+
+This folder will contain C# classes that represent database tables.
+
+For example, a future product model could be:
+
+```csharp
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string SKU { get; set; } = string.Empty;
+    public decimal UnitPrice { get; set; }
+    public int QuantityInStock { get; set; }
+}
+```
+
+The `Models` folder is empty now because product and stock features are not part of Day 1.
+
+## `DTOs/` — data sent into and out of the API
+
+DTO means Data Transfer Object.
+
+DTOs define exactly what data the API accepts or returns. They prevent the frontend from directly depending on every database field.
+
+For example, the API may return a `ProductResponseDto` with only the fields the frontend needs, while a `CreateProductDto` defines the fields allowed when creating a product.
+
+DTOs are useful because they:
+
+- Control which fields users can send
+- Avoid exposing sensitive or unnecessary fields
+- Keep responses consistent
+- Make the API easier to change later
+
+## `Services/` — business logic
+
+Services contain application rules. Controllers should stay simple: they receive a request, call a service, then return a result.
+
+A future `StockService` may enforce rules such as:
+
+- Stock quantity cannot become negative
+- Incoming stock increases inventory
+- Outgoing stock decreases inventory
+- Every stock change creates a movement record
+
+```text
+StockMovementsController
+        ↓
+StockService
+        ↓
+PartsFlowDbContext
+        ↓
+PostgreSQL
+```
+
+## `Migrations/` — database change history
+
+Migrations are generated by Entity Framework Core when database models change.
+
+For example, after adding a `Product` model:
+
+```bash
+dotnet ef migrations add CreateProductsTable
+dotnet ef database update
+```
+
+This creates a migration file in `Migrations/` and applies the table changes to PostgreSQL.
+
+Think of migrations as version control for the database structure.
+
+## `appsettings.json` — application configuration
+
+This file holds configuration values. It currently contains the PostgreSQL connection string:
+
+```text
+Host=localhost;
+Port=5432;
+Database=partsflowdb;
+Username=partsflow_user;
+Password=partsflow_password
+```
+
+It tells the backend how to find PostgreSQL.
+
+For local development, this is acceptable for learning. In production, passwords should be moved to environment variables or a secret manager and never committed to Git.
+
+## `appsettings.Development.json`
+
+This file is for local development settings. ASP.NET Core automatically uses it when the application runs in the `Development` environment.
+
+## `PartsFlow.Api.csproj` — project configuration and packages
+
+This is the C# project file. It defines the .NET version, installed NuGet packages, and build settings.
+
+Important packages:
+
+| Package | Purpose |
+|---|---|
+| `Npgsql.EntityFrameworkCore.PostgreSQL` | Lets EF Core communicate with PostgreSQL |
+| `Microsoft.EntityFrameworkCore.Design` | Enables migrations and EF Core design-time commands |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | Prepares the project for JWT authentication later |
+| `Swashbuckle.AspNetCore` | Provides Swagger UI |
+| `Microsoft.AspNetCore.OpenApi` | Provides OpenAPI support |
+
+## `Properties/launchSettings.json`
+
+This defines how the API runs locally from Visual Studio or `dotnet run`. It can contain local URLs, launch profiles, and environment variables such as `ASPNETCORE_ENVIRONMENT=Development`.
+
+## Current health-check request flow
+
+When you run:
+
+```bash
+dotnet run --urls http://localhost:5000
+```
+
+and send:
+
+```bash
+curl http://localhost:5000/api/health
+```
+
+this happens:
+
+```text
+1. A request arrives at ASP.NET Core.
+2. Program.cs maps the request to a controller.
+3. HealthController receives /api/health.
+4. HealthController returns JSON.
+5. The browser or frontend receives the JSON response.
+```
+
+```text
+Browser / Frontend
+      ↓ GET /api/health
+HealthController
+      ↓
+JSON response:
+{ "status": "ok", "app": "PartsFlow.Api" }
+```
+
+The database is configured, but the health endpoint does not query it yet. That is expected for Day 1 because no inventory or sales data exists yet.
