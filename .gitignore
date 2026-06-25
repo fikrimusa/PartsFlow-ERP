@@ -9,3 +9,7 @@ frontend/partsflow-web/.next/
 # Local environment files
 .env
 .env.*
+
+# Local tool metadata
+.agents/
+.codex/

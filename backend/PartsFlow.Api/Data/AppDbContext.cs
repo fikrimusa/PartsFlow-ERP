@@ -5,25 +5,11 @@ namespace PartsFlow.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<User> Users => Set<User>();
     public DbSet<Product> Products => Set<Product>();
-    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
-    public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
-    public DbSet<SalesOrderItem> SalesOrderItems => Set<SalesOrderItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasIndex(user => user.Email).IsUnique();
-            entity.Property(user => user.FullName).HasMaxLength(150).IsRequired();
-            entity.Property(user => user.Email).HasMaxLength(255).IsRequired();
-            entity.Property(user => user.PasswordHash).HasMaxLength(500).IsRequired();
-            entity.Property(user => user.Role).HasMaxLength(50).IsRequired();
-            entity.Property(user => user.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-        });
 
         modelBuilder.Entity<Product>(entity =>
         {
@@ -37,58 +23,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(product => product.SellingPrice).HasPrecision(18, 2);
             entity.Property(product => product.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(product => product.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-        });
-
-        modelBuilder.Entity<StockMovement>(entity =>
-        {
-            entity.Property(stockMovement => stockMovement.Type).HasMaxLength(50).IsRequired();
-            entity.Property(stockMovement => stockMovement.Reason).HasMaxLength(255).IsRequired();
-            entity.Property(stockMovement => stockMovement.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-            entity
-                .HasOne(stockMovement => stockMovement.Product)
-                .WithMany(product => product.StockMovements)
-                .HasForeignKey(stockMovement => stockMovement.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity
-                .HasOne(stockMovement => stockMovement.CreatedByUser)
-                .WithMany(user => user.StockMovements)
-                .HasForeignKey(stockMovement => stockMovement.CreatedByUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        modelBuilder.Entity<SalesOrder>(entity =>
-        {
-            entity.Property(salesOrder => salesOrder.OrderNumber).HasMaxLength(50).IsRequired();
-            entity.Property(salesOrder => salesOrder.CustomerName).HasMaxLength(150).IsRequired();
-            entity.Property(salesOrder => salesOrder.Status).HasMaxLength(50).IsRequired();
-            entity.Property(salesOrder => salesOrder.TotalAmount).HasPrecision(18, 2);
-            entity.Property(salesOrder => salesOrder.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-            entity
-                .HasOne(salesOrder => salesOrder.CreatedByUser)
-                .WithMany(user => user.SalesOrders)
-                .HasForeignKey(salesOrder => salesOrder.CreatedByUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        modelBuilder.Entity<SalesOrderItem>(entity =>
-        {
-            entity.Property(salesOrderItem => salesOrderItem.UnitPrice).HasPrecision(18, 2);
-            entity.Property(salesOrderItem => salesOrderItem.LineTotal).HasPrecision(18, 2);
-
-            entity
-                .HasOne(salesOrderItem => salesOrderItem.SalesOrder)
-                .WithMany(salesOrder => salesOrder.Items)
-                .HasForeignKey(salesOrderItem => salesOrderItem.SalesOrderId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity
-                .HasOne(salesOrderItem => salesOrderItem.Product)
-                .WithMany(product => product.SalesOrderItems)
-                .HasForeignKey(salesOrderItem => salesOrderItem.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         SeedProducts(modelBuilder);

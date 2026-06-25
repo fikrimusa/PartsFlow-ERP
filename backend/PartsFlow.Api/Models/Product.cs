@@ -14,7 +14,4 @@ public class Product
     public decimal SellingPrice { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-
-    public ICollection<StockMovement> StockMovements { get; set; } = [];
-    public ICollection<SalesOrderItem> SalesOrderItems { get; set; } = [];
 }

@@ -1,6 +1,16 @@
-@PartsFlow.Api_HostAddress = http://localhost:5096
+@PartsFlow.Api_HostAddress = http://localhost:5000
 
-GET {{PartsFlow.Api_HostAddress}}/weatherforecast/
+GET {{PartsFlow.Api_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+GET {{PartsFlow.Api_HostAddress}}/api/products
+Accept: application/json
+
+###
+
+GET {{PartsFlow.Api_HostAddress}}/api/products/low-stock
 Accept: application/json
 
 ###

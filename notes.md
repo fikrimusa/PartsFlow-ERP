@@ -1,18 +1,27 @@
-# PartsFlow ERP Backend Notes
+# PartsFlow ERP Notes
 
-These notes explain the backend in simple presentation language.
+PartsFlow ERP is a simple full-stack portfolio project for auto parts inventory management.
 
-The backend is the server-side part of PartsFlow ERP. It receives HTTP requests, talks to PostgreSQL through Entity Framework Core, applies business logic, and returns JSON responses to the frontend.
+Current scope:
 
-Example:
+- Product CRUD
+- Low-stock status
+- Simple dashboard
+- Swagger API testing
+- PostgreSQL database through EF Core
 
-```text
-GET /api/products
-```
+Not implemented yet:
 
-The backend receives this request, reads products from PostgreSQL, and returns a JSON list of products.
+- Authentication
+- Stock movement
+- Sales orders
+- Purchase orders
+- Supplier management
+- Deployment
 
-## Backend folder
+## Backend overview
+
+Backend folder:
 
 ```text
 backend/PartsFlow.Api/
@@ -22,539 +31,228 @@ backend/PartsFlow.Api/
 ├── Migrations/
 ├── Models/
 ├── Services/
-├── Properties/
 ├── Program.cs
 ├── PartsFlow.Api.csproj
-├── appsettings.json
-└── appsettings.Development.json
+└── appsettings.json
 ```
 
-## `Program.cs` — application startup
+## Main backend files
 
-`Program.cs` is the starting point of the API.
+### `Program.cs`
 
-When we run:
+Starts the ASP.NET Core API.
 
-```bash
-dotnet run --urls http://localhost:5000
-```
+It configures:
 
-ASP.NET Core starts from `Program.cs`.
+- controllers
+- Swagger
+- CORS for the Next.js frontend
+- PostgreSQL through EF Core
+- `ProductService`
 
-Important responsibilities:
+### `Data/AppDbContext.cs`
 
-```csharp
-builder.Services.AddControllers();
-```
+This is the EF Core database context.
 
-This enables controller-based API endpoints.
-
-```csharp
-builder.Services.AddSwaggerGen();
-```
-
-This enables Swagger, which gives us browser-based API documentation at:
-
-```text
-http://localhost:5000/swagger
-```
-
-```csharp
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("PartsFlowDatabase")));
-```
-
-This connects Entity Framework Core to PostgreSQL.
-
-```csharp
-builder.Services.AddScoped<IProductService, ProductService>();
-```
-
-This registers `ProductService` so controllers can use it.
-
-```csharp
-app.MapControllers();
-```
-
-This activates controller routes such as:
-
-```text
-/api/health
-/api/products
-```
-
-## `Controllers/` — API endpoints
-
-Controllers receive HTTP requests and return HTTP responses.
-
-Current controllers:
-
-```text
-Controllers/
-├── HealthController.cs
-└── ProductsController.cs
-```
-
-### `HealthController`
-
-This is a simple test endpoint.
-
-```text
-GET /api/health
-```
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "app": "PartsFlow.Api"
-}
-```
-
-Purpose: confirm that the API is running.
-
-### `ProductsController`
-
-This exposes the Product CRUD API.
-
-CRUD means:
-
-- Create
-- Read
-- Update
-- Delete
-
-Current product endpoints:
-
-```text
-GET    /api/products              Get all products
-GET    /api/products/{id}         Get one product by ID
-POST   /api/products              Create a product
-PUT    /api/products/{id}         Update a product
-DELETE /api/products/{id}         Delete a product
-GET    /api/products/low-stock    Get products with low stock
-```
-
-The controller does not contain the main business logic. It calls `ProductService`.
-
-Simple flow:
-
-```text
-HTTP request
-    ↓
-ProductsController
-    ↓
-ProductService
-    ↓
-AppDbContext
-    ↓
-PostgreSQL
-```
-
-## `Data/` — database access
-
-Current file:
-
-```text
-Data/AppDbContext.cs
-```
-
-`AppDbContext` is the bridge between C# and PostgreSQL.
-
-It tells Entity Framework Core:
-
-- which database tables exist
-- which C# model belongs to each table
-- how tables are related
-- which fields need unique indexes
-- which decimal fields need precision
-- what seed data should be inserted
-
-Current DbSets:
-
-```csharp
-public DbSet<User> Users => Set<User>();
-public DbSet<Product> Products => Set<Product>();
-public DbSet<StockMovement> StockMovements => Set<StockMovement>();
-public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
-public DbSet<SalesOrderItem> SalesOrderItems => Set<SalesOrderItem>();
-```
-
-Each `DbSet` represents a database table.
-
-For example:
+It defines:
 
 ```csharp
 public DbSet<Product> Products => Set<Product>();
 ```
 
-means EF Core can query and save records in the `Products` table.
+It also configures:
 
-## `Models/` — database entities
+- unique SKU index
+- decimal precision for prices
+- seed product data
 
-Models represent database tables.
+### `Models/Product.cs`
 
-Current models:
-
-```text
-Models/
-├── User.cs
-├── Product.cs
-├── StockMovement.cs
-├── SalesOrder.cs
-└── SalesOrderItem.cs
-```
-
-### `Product`
-
-Represents an auto part in inventory.
+Represents the `Products` database table.
 
 Important fields:
 
-- `SKU`: unique product code
-- `Name`: product name
-- `Brand`: product brand
-- `Category`: product category
-- `Quantity`: current stock quantity
-- `MinimumStockLevel`: warning level for low stock
-- `CostPrice`: how much the company buys it for
-- `SellingPrice`: how much the company sells it for
-- `CreatedAt`: when it was created
-- `UpdatedAt`: when it was last updated
+- `SKU`
+- `Name`
+- `Brand`
+- `Category`
+- `Quantity`
+- `MinimumStockLevel`
+- `CostPrice`
+- `SellingPrice`
 
-### `User`
+### `DTOs/`
 
-Represents a system user.
+DTOs define what the API accepts and returns.
 
-Auth is not implemented yet, but the model is prepared for future JWT authentication.
+- `CreateProductRequest`
+- `UpdateProductRequest`
+- `ProductResponse`
 
-Important fields:
+### `Services/ProductService.cs`
 
-- `FullName`
-- `Email`
-- `PasswordHash`
-- `Role`
-- `CreatedAt`
-
-### `StockMovement`
-
-Represents stock coming in or going out.
-
-Example:
-
-```text
-Product: Engine Oil 10W-40
-Type: In
-Quantity: 20
-Reason: Supplier delivery
-```
-
-This is only modeled today. The stock movement API is not implemented yet.
-
-### `SalesOrder`
-
-Represents a customer order.
-
-Example:
-
-```text
-OrderNumber: SO-0001
-CustomerName: Ahmad Workshop
-Status: Draft
-TotalAmount: 250.00
-```
-
-This is only modeled today. Sales order API logic is not implemented yet.
-
-### `SalesOrderItem`
-
-Represents one product line inside a sales order.
-
-Example:
-
-```text
-Sales Order: SO-0001
-Product: RCB Brake Caliper
-Quantity: 1
-UnitPrice: 250.00
-LineTotal: 250.00
-```
-
-## `DTOs/` — API request and response shapes
-
-DTO means Data Transfer Object.
-
-DTOs define what data the API accepts and returns.
-
-Current product DTOs:
-
-```text
-DTOs/
-├── CreateProductRequest.cs
-├── UpdateProductRequest.cs
-└── ProductResponse.cs
-```
-
-### `CreateProductRequest`
-
-Used when creating a product with:
-
-```text
-POST /api/products
-```
-
-It includes validation rules such as:
-
-- SKU is required
-- Name is required
-- Quantity cannot be negative
-- Minimum stock level cannot be negative
-- Cost price cannot be negative
-- Selling price cannot be negative
-
-### `UpdateProductRequest`
-
-Used when updating a product with:
-
-```text
-PUT /api/products/{id}
-```
-
-It uses the same validation rules as product creation.
-
-### `ProductResponse`
-
-Used when returning product data to the frontend.
-
-This keeps API responses clean and consistent.
-
-## `Services/` — business logic
-
-Services contain application logic.
-
-Current service files:
-
-```text
-Services/
-├── IProductService.cs
-└── ProductService.cs
-```
-
-### `IProductService`
-
-This is an interface. It describes what the product service can do.
-
-Example methods:
-
-```csharp
-Task<List<ProductResponse>> GetAllAsync();
-Task<ProductResponse?> GetByIdAsync(int id);
-Task<ProductResponse> CreateAsync(CreateProductRequest request);
-Task<bool> UpdateAsync(int id, UpdateProductRequest request);
-Task<bool> DeleteAsync(int id);
-```
-
-### `ProductService`
-
-This contains the actual product logic.
-
-Responsibilities:
+Contains product business logic:
 
 - get all products
-- get one product by ID
+- get product by ID
+- create product
+- update product
+- delete product
 - get low-stock products
-- create a product
-- update a product
-- delete a product
-- prevent duplicate SKU values
-- convert `Product` models into `ProductResponse` DTOs
 
-Why use a service?
+Keeping this logic in a service keeps the controller simple.
 
-Because it keeps controllers clean.
+### `Controllers/ProductsController.cs`
 
-Bad structure:
+Defines the Product API routes:
 
 ```text
-Controller does everything
+GET    /api/products
+GET    /api/products/{id}
+POST   /api/products
+PUT    /api/products/{id}
+DELETE /api/products/{id}
+GET    /api/products/low-stock
 ```
 
-Better structure:
+## Frontend overview
+
+Frontend folder:
 
 ```text
-Controller handles HTTP
-Service handles business logic
-DbContext handles database access
+frontend/partsflow-web/
+├── src/lib/api.ts
+├── src/pages/index.tsx
+├── src/pages/dashboard.tsx
+└── src/pages/products.tsx
 ```
 
-## `Migrations/` — database version history
+### `src/lib/api.ts`
 
-Migrations are Entity Framework Core files that describe database structure changes.
+Central API client.
 
-Current migration:
+Uses:
 
 ```text
-Migrations/20260625093309_InitialCreate.cs
+NEXT_PUBLIC_API_BASE_URL
 ```
 
-This migration creates:
+Default:
 
-- `Users`
-- `Products`
-- `StockMovements`
-- `SalesOrders`
-- `SalesOrderItems`
-- indexes
-- relationships
-- seed products
+```text
+http://localhost:5000
+```
 
-Migration command:
+### `src/pages/dashboard.tsx`
+
+Shows:
+
+- Total Products
+- Low Stock Products
+- Total Inventory Quantity
+
+### `src/pages/products.tsx`
+
+Shows:
+
+- Product table
+- Low Stock / In Stock badge
+- Create form
+- Edit form
+- Delete action
+
+## Low-stock rule
+
+A product is low stock when:
+
+```text
+Quantity <= MinimumStockLevel
+```
+
+## Interview demo flow
+
+1. Start PostgreSQL.
+2. Run backend.
+3. Open Swagger and show Product endpoints.
+4. Run frontend.
+5. Open Dashboard.
+6. Open Products page.
+7. Create a product.
+8. Edit the product quantity.
+9. Show low-stock badge changing.
+10. Delete the product.
+
+## Run commands
+
+Use three terminals when testing locally:
+
+- Terminal 1: database/backend setup
+- Terminal 2: backend server
+- Terminal 3: frontend server
+
+### 1. Start PostgreSQL
+
+From project root:
 
 ```bash
-cd backend/PartsFlow.Api
-dotnet ef migrations add InitialCreate
-```
-
-Apply migration to PostgreSQL:
-
-```bash
-dotnet ef database update
-```
-
-Think of migrations as Git commits for the database structure.
-
-## Seed data
-
-The initial migration inserts sample products:
-
-- RCB Brake Caliper
-- UMA Racing Camshaft
-- KYT Helmet Visor
-- Motorcycle Chain 428H
-- Engine Oil 10W-40
-- Rear Sprocket 36T
-
-This makes the API useful immediately after migration.
-
-After running:
-
-```bash
-dotnet ef database update
-```
-
-we can test:
-
-```bash
-curl http://localhost:5000/api/products
-```
-
-and see product data without manually inserting records.
-
-## `appsettings.json` — configuration
-
-This file contains the PostgreSQL connection string:
-
-```text
-Host=localhost;
-Port=5432;
-Database=partsflowdb;
-Username=partsflow_user;
-Password=partsflow_password
-```
-
-The backend uses this to connect to the Docker PostgreSQL database.
-
-For portfolio local development, this is acceptable. In production, passwords should be moved to environment variables or a secret manager.
-
-## `PartsFlow.Api.csproj` — packages and project settings
-
-This file defines the .NET project and installed NuGet packages.
-
-Important packages:
-
-| Package | Purpose |
-|---|---|
-| `Npgsql.EntityFrameworkCore.PostgreSQL` | Allows EF Core to use PostgreSQL |
-| `Microsoft.EntityFrameworkCore.Design` | Enables migration commands |
-| `Microsoft.AspNetCore.Authentication.JwtBearer` | Prepared for JWT auth later |
-| `Swashbuckle.AspNetCore` | Provides Swagger UI |
-| `Microsoft.AspNetCore.OpenApi` | Provides OpenAPI support |
-
-## Request flow examples
-
-### Health check flow
-
-```text
-Browser / curl
-    ↓ GET /api/health
-HealthController
-    ↓
-JSON response
-```
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "app": "PartsFlow.Api"
-}
-```
-
-### Get products flow
-
-```text
-Browser / Frontend / Swagger
-    ↓ GET /api/products
-ProductsController
-    ↓ calls
-ProductService
-    ↓ queries
-AppDbContext
-    ↓ reads from
-PostgreSQL Products table
-    ↓ returns
-JSON product list
-```
-
-### Create product flow
-
-```text
-Swagger / Frontend sends POST /api/products
-    ↓
-ProductsController receives CreateProductRequest
-    ↓
-ASP.NET validates required fields and negative numbers
-    ↓
-ProductService checks duplicate SKU
-    ↓
-ProductService creates Product model
-    ↓
-AppDbContext saves it to PostgreSQL
-    ↓
-API returns 201 Created with ProductResponse
-```
-
-## Testing commands
-
-Start PostgreSQL:
-
-```bash
+cd ~/Projects/PartsFlow-ERP
 docker compose up -d postgres
 ```
 
-Apply migration:
+Check that PostgreSQL is running:
+
+```bash
+docker compose ps
+```
+
+Expected result:
+
+```text
+partsflow-postgres   Up   0.0.0.0:5432->5432/tcp
+```
+
+### 2. Apply database migration
+
+From the backend folder:
 
 ```bash
 cd backend/PartsFlow.Api
 dotnet ef database update
 ```
 
-Run backend:
+This creates the `Products` table and inserts demo products.
+
+If your local database is old or broken, reset it:
+
+```bash
+cd ~/Projects/PartsFlow-ERP
+docker compose down -v
+docker compose up -d postgres
+cd backend/PartsFlow.Api
+dotnet ef database update
+```
+
+Only use `docker compose down -v` when you are okay deleting the local database data.
+
+### 3. Run backend
+
+From:
+
+```bash
+cd ~/Projects/PartsFlow-ERP/backend/PartsFlow.Api
+```
+
+Run:
 
 ```bash
 dotnet run --urls http://localhost:5000
+```
+
+Expected output:
+
+```text
+Now listening on: http://localhost:5000
+Hosting environment: Development
 ```
 
 Open Swagger:
@@ -563,28 +261,217 @@ Open Swagger:
 http://localhost:5000/swagger
 ```
 
-Test products:
+Test these endpoints in Swagger:
+
+```text
+GET    /api/health
+GET    /api/products
+GET    /api/products/low-stock
+POST   /api/products
+PUT    /api/products/{id}
+DELETE /api/products/{id}
+```
+
+### 4. Run frontend
+
+Open a new terminal:
+
+```bash
+cd ~/Projects/PartsFlow-ERP
+cd frontend/partsflow-web
+npm run dev
+```
+
+If dependencies are missing:
+
+```bash
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Full backend-to-frontend test
+
+### Test Dashboard
+
+1. Start PostgreSQL.
+2. Apply migrations.
+3. Run backend on `http://localhost:5000`.
+4. Run frontend on `http://localhost:3000`.
+5. Open:
+
+```text
+http://localhost:3000/dashboard
+```
+
+You should see:
+
+- Total Products
+- Low Stock Products
+- Total Inventory Quantity
+
+These values come from:
+
+```text
+GET http://localhost:5000/api/products
+```
+
+### Test Products page
+
+Open:
+
+```text
+http://localhost:3000/products
+```
+
+You should see a table with seeded products:
+
+- RCB Brake Caliper
+- UMA Racing Camshaft
+- KYT Helmet Visor
+- Motorcycle Chain 428H
+- Engine Oil 10W-40
+- Rear Sprocket 36T
+
+### Test create product
+
+In the product form, enter:
+
+```text
+SKU: TEST-001
+Name: Test Brake Pad
+Brand: Brembo
+Category: Brake System
+Description: Front brake pad test item
+Quantity: 10
+Minimum Stock: 5
+Cost Price: 20
+Selling Price: 35
+```
+
+Click:
+
+```text
+Create Product
+```
+
+Expected result:
+
+- Product appears in the table.
+- Status shows `In Stock`.
+
+### Test edit product
+
+Click:
+
+```text
+Edit
+```
+
+Change:
+
+```text
+Quantity: 3
+Minimum Stock: 5
+```
+
+Click:
+
+```text
+Update Product
+```
+
+Expected result:
+
+- Quantity becomes `3`.
+- Status changes to `Low Stock`.
+
+### Test delete product
+
+Click:
+
+```text
+Delete
+```
+
+Confirm the browser popup.
+
+Expected result:
+
+- Product is removed from the table.
+
+## Quick curl tests
+
+With the backend running:
+
+```bash
+curl http://localhost:5000/api/health
+```
 
 ```bash
 curl http://localhost:5000/api/products
 ```
 
-Test low stock:
-
 ```bash
 curl http://localhost:5000/api/products/low-stock
 ```
 
-Stop PostgreSQL:
+## Common problems
 
-```bash
-docker compose stop postgres
+### `dotnet ef database update` hangs
+
+Stop it with:
+
+```text
+Ctrl+C
 ```
 
-## Presentation summary
+Do not use `Ctrl+Z`, because that pauses the process instead of stopping it.
 
-For Day 2, the backend now has a real database foundation.
+Then run:
 
-The system has models for users, products, stock movements, and sales orders. Entity Framework Core maps these models to PostgreSQL tables. The Product feature is the first complete CRUD feature, using DTOs for clean API contracts and a service layer to keep business logic out of the controller.
+```bash
+dotnet build-server shutdown
+dotnet build --no-restore /nr:false /p:UseSharedCompilation=false
+dotnet ef database update --no-build
+```
 
-Authentication, frontend product pages, stock movement logic, and sales order logic are intentionally not implemented yet.
+### Frontend cannot load products
+
+Check:
+
+1. Backend is running on `http://localhost:5000`.
+2. PostgreSQL is running.
+3. Migration was applied.
+4. Browser console does not show CORS errors.
+
+The backend already allows CORS from:
+
+```text
+http://localhost:3000
+```
+
+### Port already in use
+
+For backend:
+
+```bash
+sudo ss -ltnp '( sport = :5000 )'
+```
+
+For frontend:
+
+```bash
+sudo ss -ltnp '( sport = :3000 )'
+```
+
+For PostgreSQL:
+
+```bash
+sudo ss -ltnp '( sport = :5432 )'
+```

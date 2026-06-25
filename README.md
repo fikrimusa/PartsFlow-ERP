@@ -1,48 +1,100 @@
 # PartsFlow ERP
 
-PartsFlow ERP is a portfolio project for an auto-parts trading and distribution company. It will provide a focused system for managing inventory, stock movements, and sales orders.
+PartsFlow ERP is a simple full-stack portfolio project for managing auto parts inventory.
+
+The current MVP focuses on Product CRUD: create, view, update, delete, and identify low-stock products.
 
 ## Tech stack
 
-- Backend: C# with ASP.NET Core Web API
-- Database: PostgreSQL with Entity Framework Core
-- API documentation: Swagger / OpenAPI
-- Authentication: JWT (planned)
-- Frontend: Next.js, TypeScript, and Tailwind CSS
-- Local infrastructure: Docker Compose
+- Backend: ASP.NET Core Web API
+- Database: PostgreSQL
+- ORM: Entity Framework Core
+- API docs: Swagger / OpenAPI
+- Frontend: Next.js, TypeScript, Tailwind CSS
+- Container: Docker Compose
 
-## Planned MVP features
+## MVP features
 
-- Product catalog management
-- Inventory and stock movement tracking
-- Sales order management
-- Dashboard summaries
-- JWT-based user authentication
+- Product catalog CRUD
+- Low-stock status based on quantity and minimum stock level
+- Simple inventory dashboard
+- PostgreSQL database with EF Core migration
+- Seed demo product data
 
-## Setup
+## Product CRUD description
 
-From the `PartsFlow-ERP` directory, start PostgreSQL:
+Products represent auto parts in inventory.
+
+Each product includes:
+
+- SKU
+- Name
+- Brand
+- Category
+- Description
+- Quantity
+- Minimum stock level
+- Cost price
+- Selling price
+
+A product is considered low stock when:
+
+```text
+Quantity <= MinimumStockLevel
+```
+
+## API endpoints
+
+- `GET /api/health`
+- `GET /api/products`
+- `GET /api/products/{id}`
+- `POST /api/products`
+- `PUT /api/products/{id}`
+- `DELETE /api/products/{id}`
+- `GET /api/products/low-stock`
+
+## Demo data
+
+The `AddProduct` migration seeds these products:
+
+- RCB Brake Caliper
+- UMA Racing Camshaft
+- KYT Helmet Visor
+- Motorcycle Chain 428H
+- Engine Oil 10W-40
+- Rear Sprocket 36T
+
+## Setup commands
+
+From the project root:
 
 ```bash
 docker compose up -d postgres
 ```
 
-Restore and run the backend:
-
-```bash
-cd backend/PartsFlow.Api
-dotnet restore
-dotnet run
-```
-
-Apply database migrations:
+Apply database migration:
 
 ```bash
 cd backend/PartsFlow.Api
 dotnet ef database update
 ```
 
-Run the frontend in a separate terminal:
+## Backend run command
+
+```bash
+cd backend/PartsFlow.Api
+dotnet run --urls http://localhost:5000
+```
+
+Swagger:
+
+```text
+http://localhost:5000/swagger
+```
+
+## Frontend run command
+
+In a separate terminal:
 
 ```bash
 cd frontend/partsflow-web
@@ -50,47 +102,72 @@ npm install
 npm run dev
 ```
 
-The API health endpoint is available at `http://localhost:5000/api/health` (or the port printed by `dotnet run`). Swagger is available at `/swagger` in the Development environment.
+Frontend:
 
-## Database setup
+```text
+http://localhost:3000
+```
 
-The local PostgreSQL database is defined in `docker-compose.yml`.
+The frontend API base URL defaults to:
 
-- Database: `partsflowdb`
-- Username: `partsflow_user`
-- Password: `partsflow_password`
-- Port: `5432`
+```text
+http://localhost:5000
+```
 
-Useful database commands:
+You can override it with:
 
 ```bash
-# Start PostgreSQL
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000 npm run dev
+```
+
+## Database migration commands
+
+```bash
+cd backend/PartsFlow.Api
+
+# Add a migration
+dotnet ef migrations add AddProduct
+
+# Apply migrations
+dotnet ef database update
+```
+
+If your local database contains old development tables and you want a clean reset:
+
+```bash
+docker compose down -v
 docker compose up -d postgres
-
-# Stop PostgreSQL without deleting data
-docker compose stop postgres
-
-# Apply EF Core migrations
 cd backend/PartsFlow.Api
 dotnet ef database update
-
-# Create a new migration
-dotnet ef migrations add MigrationName
 ```
 
-## Backend commands
+## Docker command
 
 ```bash
-cd backend/PartsFlow.Api
-dotnet build
-dotnet run --urls http://localhost:5000
+docker compose up -d postgres
 ```
 
-## Product API endpoints
+Stop PostgreSQL:
 
-- `GET /api/products`
-- `GET /api/products/{id}`
-- `POST /api/products`
-- `PUT /api/products/{id}`
-- `DELETE /api/products/{id}`
-- `GET /api/products/low-stock`
+```bash
+docker compose stop postgres
+```
+
+## Screenshots
+
+Screenshots can be added here later:
+
+- Dashboard page
+- Products table
+- Create/edit product form
+- Swagger Product API
+
+## Future improvements
+
+- JWT authentication
+- Stock movement
+- Sales orders
+- Purchase orders
+- Supplier management
+- Dashboard charts
+- Deployment

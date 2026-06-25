@@ -9,24 +9,11 @@ public class ProductService(AppDbContext dbContext) : IProductService
 {
     public async Task<List<ProductResponse>> GetAllAsync()
     {
-        return await dbContext.Products
+        var products = await dbContext.Products
             .OrderBy(product => product.Name)
-            .Select(product => new ProductResponse
-            {
-                Id = product.Id,
-                SKU = product.SKU,
-                Name = product.Name,
-                Brand = product.Brand,
-                Category = product.Category,
-                Description = product.Description,
-                Quantity = product.Quantity,
-                MinimumStockLevel = product.MinimumStockLevel,
-                CostPrice = product.CostPrice,
-                SellingPrice = product.SellingPrice,
-                CreatedAt = product.CreatedAt,
-                UpdatedAt = product.UpdatedAt
-            })
             .ToListAsync();
+
+        return products.Select(ToResponse).ToList();
     }
 
     public async Task<ProductResponse?> GetByIdAsync(int id)
@@ -38,26 +25,13 @@ public class ProductService(AppDbContext dbContext) : IProductService
 
     public async Task<List<ProductResponse>> GetLowStockAsync()
     {
-        return await dbContext.Products
+        var products = await dbContext.Products
             .Where(product => product.Quantity <= product.MinimumStockLevel)
             .OrderBy(product => product.Quantity)
             .ThenBy(product => product.Name)
-            .Select(product => new ProductResponse
-            {
-                Id = product.Id,
-                SKU = product.SKU,
-                Name = product.Name,
-                Brand = product.Brand,
-                Category = product.Category,
-                Description = product.Description,
-                Quantity = product.Quantity,
-                MinimumStockLevel = product.MinimumStockLevel,
-                CostPrice = product.CostPrice,
-                SellingPrice = product.SellingPrice,
-                CreatedAt = product.CreatedAt,
-                UpdatedAt = product.UpdatedAt
-            })
             .ToListAsync();
+
+        return products.Select(ToResponse).ToList();
     }
 
     public async Task<ProductResponse> CreateAsync(CreateProductRequest request)
