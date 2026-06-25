@@ -13,3 +13,6 @@ frontend/partsflow-web/.next/
 # Local tool metadata
 .agents/
 .codex/
+
+# Local personal notes
+notes.md
