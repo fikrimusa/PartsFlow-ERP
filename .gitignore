@@ -5,6 +5,7 @@
 # Node.js build output and dependencies
 frontend/partsflow-web/node_modules/
 frontend/partsflow-web/.next/
+frontend/partsflow-web/out/
 
 # Local environment files
 .env

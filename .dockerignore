@@ -1,0 +1,13 @@
+.git
+.agents
+.codex
+
+**/bin
+**/obj
+
+frontend/partsflow-web/node_modules
+frontend/partsflow-web/.next
+frontend/partsflow-web/out
+
+*.md
+!README.md

@@ -158,6 +158,81 @@ Stop PostgreSQL:
 docker compose stop postgres
 ```
 
+## Render deployment
+
+This project can be deployed on Render so the app uses public `onrender.com` URLs instead of localhost.
+
+Recommended Render setup:
+
+1. Render Postgres database
+2. Render Web Service for the ASP.NET Core API
+3. Render Static Site for the Next.js frontend
+
+### Backend API on Render
+
+Create a new Render Web Service from this GitHub repo.
+
+Use these settings:
+
+```text
+Language: Docker
+Dockerfile Path: backend/PartsFlow.Api/Dockerfile
+Health Check Path: /api/health
+```
+
+Add these environment variables:
+
+```text
+DATABASE_URL=<your Render Postgres internal connection string>
+APPLY_MIGRATIONS=true
+ENABLE_SWAGGER=true
+FRONTEND_URLS=https://<your-frontend-service>.onrender.com
+```
+
+Notes:
+
+- `DATABASE_URL` allows the backend to connect to Render Postgres.
+- `APPLY_MIGRATIONS=true` applies EF Core migrations when the backend starts.
+- `ENABLE_SWAGGER=true` keeps Swagger available for portfolio/demo testing.
+- Update `FRONTEND_URLS` after the frontend static site has its final Render URL.
+
+Backend test URLs:
+
+```text
+https://<your-backend-service>.onrender.com/api/health
+https://<your-backend-service>.onrender.com/swagger
+```
+
+### Frontend on Render
+
+Create a new Render Static Site from this GitHub repo.
+
+Use these settings:
+
+```text
+Root Directory: frontend/partsflow-web
+Build Command: npm install && npm run export
+Publish Directory: out
+```
+
+Add this environment variable:
+
+```text
+NEXT_PUBLIC_API_BASE_URL=https://<your-backend-service>.onrender.com
+```
+
+Frontend URL:
+
+```text
+https://<your-frontend-service>.onrender.com
+```
+
+### Render free tier notes
+
+- Free web services sleep after a period of no traffic, so the first request can be slow.
+- Free Render Postgres is useful for demos, but it has limits and expires after 30 days.
+- For a long-term portfolio demo, upgrade the database or use another managed PostgreSQL provider.
+
 ## Screenshots
 
 Screenshots can be added here later:
@@ -175,4 +250,4 @@ Screenshots can be added here later:
 - Purchase orders
 - Supplier management
 - Dashboard charts
-- Deployment
+- Production hardening
