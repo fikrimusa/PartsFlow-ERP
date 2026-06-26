@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FormEvent, useEffect, useState } from 'react';
-import { authApi, getStoredAuth, saveAuth } from '../lib/api';
+import { ALLOW_REGISTRATION, authApi, getStoredAuth, saveAuth } from '../lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -87,12 +87,18 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-slate-500">
-            No account yet?{' '}
-            <Link href="/register">
-              <a className="font-semibold text-blue-600 hover:text-blue-700">Register</a>
-            </Link>
-          </p>
+          {ALLOW_REGISTRATION ? (
+            <p className="mt-5 text-center text-sm text-slate-500">
+              No account yet?{' '}
+              <Link href="/register">
+                <a className="font-semibold text-blue-600 hover:text-blue-700">Register</a>
+              </Link>
+            </p>
+          ) : (
+            <p className="mt-5 rounded-lg bg-slate-50 p-3 text-center text-sm text-slate-500">
+              Public registration is disabled. Use the demo account provided by the owner.
+            </p>
+          )}
         </section>
       </main>
     </>

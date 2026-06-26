@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FormEvent, useEffect, useState } from 'react';
-import { authApi, getStoredAuth, saveAuth } from '../lib/api';
+import { ALLOW_REGISTRATION, authApi, getStoredAuth, saveAuth } from '../lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -50,54 +50,67 @@ export default function RegisterPage() {
             Register an account to access the inventory system.
           </p>
 
-          {error && (
+          {!ALLOW_REGISTRATION && (
+            <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              Public registration is disabled for this deployed demo.
+              <div className="mt-3">
+                <Link href="/login">
+                  <a className="font-semibold text-amber-900 underline">Go to login</a>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {ALLOW_REGISTRATION && error && (
             <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Full name</span>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                required
-              />
-            </label>
+          {ALLOW_REGISTRATION && (
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-700">Full name</span>
+                <input
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  required
+                />
+              </label>
 
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
+                <input
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </label>
 
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                minLength={6}
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
+                <input
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  minLength={6}
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </label>
 
-            <button
-              className="w-full rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
-              disabled={loading}
-              type="submit"
-            >
-              {loading ? 'Creating account...' : 'Create Account'}
-            </button>
-          </form>
+              <button
+                className="w-full rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                disabled={loading}
+                type="submit"
+              >
+                {loading ? 'Creating account...' : 'Create Account'}
+              </button>
+            </form>
+          )}
 
           <p className="mt-5 text-center text-sm text-slate-500">
             Already have an account?{' '}

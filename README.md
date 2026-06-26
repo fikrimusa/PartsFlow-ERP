@@ -220,6 +220,7 @@ APPLY_MIGRATIONS=true
 ENABLE_SWAGGER=true
 FRONTEND_URLS=https://<your-frontend-service>.onrender.com
 JWT_SECRET=<long random secret for signing login tokens>
+ALLOW_REGISTRATION=false
 ```
 
 Notes:
@@ -229,6 +230,7 @@ Notes:
 - `ENABLE_SWAGGER=true` keeps Swagger available for portfolio/demo testing.
 - Update `FRONTEND_URLS` after the frontend static site has its final Render URL.
 - `JWT_SECRET` signs login tokens. Use a long random value and do not share it publicly.
+- `ALLOW_REGISTRATION=false` disables public account creation in production.
 
 Backend test URLs:
 
@@ -253,7 +255,18 @@ Add this environment variable:
 
 ```text
 NEXT_PUBLIC_API_BASE_URL=https://<your-backend-service>.onrender.com
+NEXT_PUBLIC_ALLOW_REGISTRATION=false
 ```
+
+Set `NEXT_PUBLIC_ALLOW_REGISTRATION=true` only when you intentionally want to show the registration page.
+
+For a public portfolio demo, the recommended setup is:
+
+1. Temporarily enable registration.
+2. Create your demo account.
+3. Set backend `ALLOW_REGISTRATION=false`.
+4. Set frontend `NEXT_PUBLIC_ALLOW_REGISTRATION=false`.
+5. Redeploy backend and frontend.
 
 Frontend URL:
 
