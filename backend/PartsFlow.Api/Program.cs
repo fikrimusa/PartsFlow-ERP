@@ -34,11 +34,8 @@ builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment() || IsEnabled(app.Configuration["ENABLE_SWAGGER"]))
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 if (IsEnabled(app.Configuration["APPLY_MIGRATIONS"]))
 {
