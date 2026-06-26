@@ -162,11 +162,31 @@ docker compose stop postgres
 
 This project can be deployed on Render so the app uses public `onrender.com` URLs instead of localhost.
 
-Recommended Render setup:
+Recommended hosting setup:
 
-1. Render Postgres database
+1. Supabase PostgreSQL database
 2. Render Web Service for the ASP.NET Core API
 3. Render Static Site for the Next.js frontend
+
+### Supabase database
+
+Create a Supabase project and use its PostgreSQL connection string for the backend.
+
+Recommended Supabase connection option:
+
+```text
+Shared Pooler - Session mode
+```
+
+This is usually the safest choice for Render because it works over IPv4 and is suitable for a persistent backend service.
+
+In Supabase:
+
+```text
+Project Dashboard -> Connect -> Connection string -> Session pooler
+```
+
+Copy the connection string and replace `[YOUR-PASSWORD]` with your Supabase database password.
 
 ### Backend API on Render
 
@@ -183,7 +203,7 @@ Health Check Path: /api/health
 Add these environment variables:
 
 ```text
-DATABASE_URL=<your Render Postgres internal connection string>
+DATABASE_URL=<your Supabase session pooler connection string>
 APPLY_MIGRATIONS=true
 ENABLE_SWAGGER=true
 FRONTEND_URLS=https://<your-frontend-service>.onrender.com
@@ -191,7 +211,7 @@ FRONTEND_URLS=https://<your-frontend-service>.onrender.com
 
 Notes:
 
-- `DATABASE_URL` allows the backend to connect to Render Postgres.
+- `DATABASE_URL` allows the backend to connect to Supabase PostgreSQL.
 - `APPLY_MIGRATIONS=true` applies EF Core migrations when the backend starts.
 - `ENABLE_SWAGGER=true` keeps Swagger available for portfolio/demo testing.
 - Update `FRONTEND_URLS` after the frontend static site has its final Render URL.
@@ -227,11 +247,11 @@ Frontend URL:
 https://<your-frontend-service>.onrender.com
 ```
 
-### Render free tier notes
+### Free tier notes
 
 - Free web services sleep after a period of no traffic, so the first request can be slow.
-- Free Render Postgres is useful for demos, but it has limits and expires after 30 days.
-- For a long-term portfolio demo, upgrade the database or use another managed PostgreSQL provider.
+- Supabase free tier is suitable for a portfolio demo, but keep an eye on project inactivity and quota limits.
+- For a long-term production app, upgrade the database plan.
 
 ## Screenshots
 
