@@ -139,36 +139,38 @@ export default function ProductsPage() {
         <title>Products | PartsFlow ERP</title>
       </Head>
 
-      <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
+      <main className="min-h-screen bg-slate-100 px-6 py-8 text-slate-900">
         <div className="mx-auto max-w-7xl">
-          <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <header className="mb-8 rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm sm:flex sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-400">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
                 Inventory
               </p>
-              <h1 className="mt-2 text-3xl font-bold text-white">Products</h1>
-              <p className="mt-2 text-sm text-slate-400">
+              <h1 className="mt-2 text-3xl font-bold text-slate-950">Products</h1>
+              <p className="mt-2 text-sm text-slate-500">
                 {products.length} products · {lowStockProducts} low stock
               </p>
             </div>
-            <nav className="flex gap-4 text-sm text-slate-300">
+            <nav className="mt-4 flex gap-2 text-sm font-medium sm:mt-0">
               <Link href="/">
-                <a className="hover:text-white">Home</a>
+                <a className="rounded-lg px-4 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-950">
+                  Dashboard
+                </a>
               </Link>
-              <Link href="/dashboard">
-                <a className="hover:text-white">Dashboard</a>
+              <Link href="/products">
+                <a className="rounded-lg bg-blue-50 px-4 py-2 text-blue-700">Products</a>
               </Link>
             </nav>
           </header>
 
           {error && (
-            <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          <section className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <h2 className="mb-4 text-lg font-semibold text-white">
+          <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-slate-950">
               {editingProductId ? 'Edit Product' : 'Create Product'}
             </h2>
             <form className="grid gap-4 md:grid-cols-4" onSubmit={handleSubmit}>
@@ -205,16 +207,16 @@ export default function ProductsPage() {
                 onChange={(value) => updateField('sellingPrice', value)}
               />
               <label className="md:col-span-4">
-                <span className="mb-1 block text-sm text-slate-300">Description</span>
+                <span className="mb-1 block text-sm font-medium text-slate-700">Description</span>
                 <textarea
-                  className="min-h-[80px] w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                  className="min-h-[80px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   value={form.description}
                   onChange={(event) => updateField('description', event.target.value)}
                 />
               </label>
               <div className="flex gap-3 md:col-span-4">
                 <button
-                  className="rounded-lg bg-cyan-400 px-5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-60"
+                  className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
                   disabled={saving}
                   type="submit"
                 >
@@ -222,7 +224,7 @@ export default function ProductsPage() {
                 </button>
                 {editingProductId && (
                   <button
-                    className="rounded-lg border border-slate-700 px-5 py-2 text-sm font-semibold text-white transition hover:border-cyan-400"
+                    className="rounded-lg border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     type="button"
                     onClick={resetForm}
                   >
@@ -233,10 +235,10 @@ export default function ProductsPage() {
             </form>
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-800 text-sm">
-                <thead className="bg-slate-900/80 text-left text-xs uppercase tracking-wide text-slate-400">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-4 py-3">SKU</th>
                     <th className="px-4 py-3">Name</th>
@@ -249,16 +251,16 @@ export default function ProductsPage() {
                     <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800">
+                <tbody className="divide-y divide-slate-200">
                   {loading ? (
                     <tr>
-                      <td className="px-4 py-6 text-slate-400" colSpan={9}>
+                      <td className="px-4 py-6 text-slate-500" colSpan={9}>
                         Loading products...
                       </td>
                     </tr>
                   ) : products.length === 0 ? (
                     <tr>
-                      <td className="px-4 py-6 text-slate-400" colSpan={9}>
+                      <td className="px-4 py-6 text-slate-500" colSpan={9}>
                         No products found.
                       </td>
                     </tr>
@@ -267,9 +269,9 @@ export default function ProductsPage() {
                       const isLowStock = product.quantity <= product.minimumStockLevel;
 
                       return (
-                        <tr key={product.id} className="text-slate-200">
-                          <td className="px-4 py-3 font-mono text-xs">{product.sku}</td>
-                          <td className="px-4 py-3 font-medium text-white">{product.name}</td>
+                        <tr key={product.id} className="text-slate-700 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-mono text-xs text-slate-600">{product.sku}</td>
+                          <td className="px-4 py-3 font-medium text-slate-950">{product.name}</td>
                           <td className="px-4 py-3">{product.brand}</td>
                           <td className="px-4 py-3">{product.category}</td>
                           <td className="px-4 py-3">{product.quantity}</td>
@@ -279,8 +281,8 @@ export default function ProductsPage() {
                             <span
                               className={`rounded-full px-3 py-1 text-xs font-semibold ${
                                 isLowStock
-                                  ? 'bg-amber-400/10 text-amber-300'
-                                  : 'bg-emerald-400/10 text-emerald-300'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-emerald-100 text-emerald-700'
                               }`}
                             >
                               {isLowStock ? 'Low Stock' : 'In Stock'}
@@ -289,14 +291,14 @@ export default function ProductsPage() {
                           <td className="px-4 py-3">
                             <div className="flex gap-3">
                               <button
-                                className="text-cyan-300 hover:text-cyan-200"
+                                className="font-medium text-blue-600 hover:text-blue-800"
                                 type="button"
                                 onClick={() => startEdit(product)}
                               >
                                 Edit
                               </button>
                               <button
-                                className="text-red-300 hover:text-red-200"
+                                className="font-medium text-red-600 hover:text-red-800"
                                 type="button"
                                 onClick={() => deleteProduct(product)}
                               >
@@ -331,9 +333,9 @@ function TextInput({
 }) {
   return (
     <label>
-      <span className="mb-1 block text-sm text-slate-300">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
       <input
-        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         min={type === 'number' ? '0' : undefined}
         step={type === 'number' ? '0.01' : undefined}
         type={type}

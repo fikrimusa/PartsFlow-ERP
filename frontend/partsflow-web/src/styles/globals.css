@@ -3,10 +3,11 @@
 @tailwind utilities;
 
 html {
-  background: #020617;
+  background: #eef2f7;
 }
 
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
+  color: #0f172a;
 }

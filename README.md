@@ -21,6 +21,11 @@ The current MVP focuses on Product CRUD: create, view, update, delete, and ident
 - PostgreSQL database with EF Core migration
 - Seed demo product data
 
+## Frontend pages
+
+- `/` - Dashboard
+- `/products` - Product management
+
 ## Product CRUD description
 
 Products represent auto parts in inventory.
@@ -157,7 +162,7 @@ docker compose stop postgres
 
 Screenshots can be added here later:
 
-- Dashboard page
+- Dashboard page (`/`)
 - Products table
 - Create/edit product form
 - Swagger Product API
