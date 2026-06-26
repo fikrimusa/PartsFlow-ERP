@@ -1,5 +1,9 @@
 using System.Net;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using PartsFlow.Api.Data;
 using PartsFlow.Api.Services;
 
@@ -26,10 +30,61 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token. Example: Bearer eyJhbGciOi..."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+var jwtKey = AuthService.GetJwtKey(builder.Configuration);
+var jwtIssuer = AuthService.GetJwtIssuer(builder.Configuration);
+var jwtAudience = AuthService.GetJwtAudience(builder.Configuration);
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var databaseConnectionString = GetDatabaseConnectionString(builder.Configuration);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(databaseConnectionString));
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
@@ -45,6 +100,9 @@ if (IsEnabled(app.Configuration["APPLY_MIGRATIONS"]))
 }
 
 app.UseCors("Frontend");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

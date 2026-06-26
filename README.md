@@ -3,6 +3,7 @@
 PartsFlow ERP is a simple full-stack portfolio project for managing auto parts inventory.
 
 The current MVP focuses on Product CRUD: create, view, update, delete, and identify low-stock products.
+Users can register and login before managing products.
 
 ## Tech stack
 
@@ -16,6 +17,8 @@ The current MVP focuses on Product CRUD: create, view, update, delete, and ident
 ## MVP features
 
 - Product catalog CRUD
+- User registration and login
+- JWT-protected product management
 - Low-stock status based on quantity and minimum stock level
 - Simple inventory dashboard
 - PostgreSQL database with EF Core migration
@@ -25,6 +28,8 @@ The current MVP focuses on Product CRUD: create, view, update, delete, and ident
 
 - `/` - Dashboard
 - `/products` - Product management
+- `/login` - User login
+- `/register` - User registration
 
 ## Product CRUD description
 
@@ -51,6 +56,8 @@ Quantity <= MinimumStockLevel
 ## API endpoints
 
 - `GET /api/health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
 - `GET /api/products`
 - `GET /api/products/{id}`
 - `POST /api/products`
@@ -83,6 +90,11 @@ Apply database migration:
 cd backend/PartsFlow.Api
 dotnet ef database update
 ```
+
+This applies:
+
+- `AddProduct`
+- `AddUserAuth`
 
 ## Backend run command
 
@@ -207,6 +219,7 @@ DATABASE_URL=<your Supabase session pooler connection string>
 APPLY_MIGRATIONS=true
 ENABLE_SWAGGER=true
 FRONTEND_URLS=https://<your-frontend-service>.onrender.com
+JWT_SECRET=<long random secret for signing login tokens>
 ```
 
 Notes:
@@ -215,6 +228,7 @@ Notes:
 - `APPLY_MIGRATIONS=true` applies EF Core migrations when the backend starts.
 - `ENABLE_SWAGGER=true` keeps Swagger available for portfolio/demo testing.
 - Update `FRONTEND_URLS` after the frontend static site has its final Render URL.
+- `JWT_SECRET` signs login tokens. Use a long random value and do not share it publicly.
 
 Backend test URLs:
 
@@ -264,7 +278,7 @@ Screenshots can be added here later:
 
 ## Future improvements
 
-- JWT authentication
+- Role-based authorization
 - Stock movement
 - Sales orders
 - Purchase orders

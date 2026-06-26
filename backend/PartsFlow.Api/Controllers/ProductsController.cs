@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using PartsFlow.Api.DTOs;
 using PartsFlow.Api.Services;
 
 namespace PartsFlow.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/products")]
 public class ProductsController(IProductService productService) : ControllerBase
 {

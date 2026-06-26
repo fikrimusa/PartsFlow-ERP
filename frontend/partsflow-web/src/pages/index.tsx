@@ -1,20 +1,36 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
-import { Product, productApi } from '../lib/api';
+import { AuthUser, clearAuth, getStoredAuth, Product, productApi } from '../lib/api';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const auth = getStoredAuth();
+
+    if (!auth) {
+      router.replace('/login');
+      return;
+    }
+
+    setUser(auth.user);
     productApi
       .getAll()
       .then(setProducts)
       .catch((apiError: Error) => setError(apiError.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
+
+  function logout() {
+    clearAuth();
+    router.push('/login');
+  }
 
   const summary = useMemo(() => {
     return {
@@ -45,10 +61,10 @@ export default function DashboardPage() {
               </p>
               <h1 className="mt-2 text-3xl font-bold text-slate-950">PartsFlow ERP</h1>
               <p className="mt-2 text-sm text-slate-500">
-                Simple auto parts inventory management.
+                {user ? `Logged in as ${user.fullName}` : 'Simple auto parts inventory management.'}
               </p>
             </div>
-            <nav className="mt-4 flex gap-2 text-sm font-medium sm:mt-0">
+            <nav className="mt-4 flex flex-wrap gap-2 text-sm font-medium sm:mt-0">
               <Link href="/">
                 <a className="rounded-lg bg-blue-50 px-4 py-2 text-blue-700">Dashboard</a>
               </Link>
@@ -57,6 +73,13 @@ export default function DashboardPage() {
                   Products
                 </a>
               </Link>
+              <button
+                className="rounded-lg px-4 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                type="button"
+                onClick={logout}
+              >
+                Logout
+              </button>
             </nav>
           </header>
 

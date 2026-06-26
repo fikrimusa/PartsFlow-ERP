@@ -1,7 +1,8 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Product, ProductInput, productApi } from '../lib/api';
+import { AuthUser, clearAuth, getStoredAuth, Product, ProductInput, productApi } from '../lib/api';
 
 type ProductFormState = {
   sku: string;
@@ -28,6 +29,8 @@ const emptyForm: ProductFormState = {
 };
 
 export default function ProductsPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<ProductFormState>(emptyForm);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
@@ -54,8 +57,21 @@ export default function ProductsPage() {
   }
 
   useEffect(() => {
+    const auth = getStoredAuth();
+
+    if (!auth) {
+      router.replace('/login');
+      return;
+    }
+
+    setUser(auth.user);
     loadProducts();
-  }, []);
+  }, [router]);
+
+  function logout() {
+    clearAuth();
+    router.push('/login');
+  }
 
   function updateField(field: keyof ProductFormState, value: string) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
@@ -149,9 +165,10 @@ export default function ProductsPage() {
               <h1 className="mt-2 text-3xl font-bold text-slate-950">Products</h1>
               <p className="mt-2 text-sm text-slate-500">
                 {products.length} products · {lowStockProducts} low stock
+                {user ? ` · Logged in as ${user.fullName}` : ''}
               </p>
             </div>
-            <nav className="mt-4 flex gap-2 text-sm font-medium sm:mt-0">
+            <nav className="mt-4 flex flex-wrap gap-2 text-sm font-medium sm:mt-0">
               <Link href="/">
                 <a className="rounded-lg px-4 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-950">
                   Dashboard
@@ -160,6 +177,13 @@ export default function ProductsPage() {
               <Link href="/products">
                 <a className="rounded-lg bg-blue-50 px-4 py-2 text-blue-700">Products</a>
               </Link>
+              <button
+                className="rounded-lg px-4 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                type="button"
+                onClick={logout}
+              >
+                Logout
+              </button>
             </nav>
           </header>
 

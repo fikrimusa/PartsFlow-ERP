@@ -6,6 +6,7 @@ namespace PartsFlow.Api.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,6 +24,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(product => product.SellingPrice).HasPrecision(18, 2);
             entity.Property(product => product.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(product => product.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasIndex(user => user.Email).IsUnique();
+            entity.Property(user => user.FullName).HasMaxLength(150).IsRequired();
+            entity.Property(user => user.Email).HasMaxLength(150).IsRequired();
+            entity.Property(user => user.PasswordHash).HasMaxLength(500).IsRequired();
+            entity.Property(user => user.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         SeedProducts(modelBuilder);
