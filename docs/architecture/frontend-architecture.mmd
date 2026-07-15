@@ -1,0 +1,51 @@
+flowchart TD
+    User["User browser"]
+
+    subgraph RenderFrontend["Render Static Site: partsflow-web"]
+        StaticApp["Exported Next.js static app\nout directory"]
+
+        subgraph Pages["Pages"]
+            LoginPage["/login\nLogin page"]
+            RegisterPage["/register\nRegistration page"]
+            DashboardPage["/\nDashboard page"]
+            ProductsPage["/products\nProduct management page"]
+        end
+
+        subgraph FrontendLogic["Frontend logic"]
+            ApiClient["src/lib/api.ts\nfetch client"]
+            LocalStorage["Browser localStorage\nJWT token and user"]
+            Env["Build-time env\nNEXT_PUBLIC_API_BASE_URL\nNEXT_PUBLIC_ALLOW_REGISTRATION"]
+        end
+
+        subgraph UI["UI"]
+            Navigation["Navigation\nDashboard, Products, Logout"]
+            ProductForm["Product form\nCreate and edit"]
+            ProductTable["Product table\nLow stock badge"]
+            DashboardCards["Dashboard cards\nTotal products\nLow stock products\nTotal quantity"]
+        end
+    end
+
+    Backend["Render backend API\nhttps://partsflow-erp.onrender.com"]
+
+    User -->|"opens site"| StaticApp
+    StaticApp --> Pages
+
+    LoginPage --> ApiClient
+    RegisterPage --> ApiClient
+    DashboardPage --> ApiClient
+    ProductsPage --> ApiClient
+
+    LoginPage --> LocalStorage
+    RegisterPage --> LocalStorage
+    DashboardPage --> LocalStorage
+    ProductsPage --> LocalStorage
+
+    Env --> ApiClient
+    LocalStorage -->|"Authorization: Bearer JWT"| ApiClient
+    ApiClient -->|"HTTPS API calls"| Backend
+
+    DashboardPage --> Navigation
+    DashboardPage --> DashboardCards
+    ProductsPage --> Navigation
+    ProductsPage --> ProductForm
+    ProductsPage --> ProductTable

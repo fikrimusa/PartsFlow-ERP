@@ -1,0 +1,57 @@
+flowchart TD
+    Client["Client\nNext.js frontend or Swagger"]
+
+    subgraph RenderBackend["Render Web Service: partsflow-erp"]
+        Docker["Docker container\nASP.NET Core Web API"]
+        Program["Program.cs\nCORS, Swagger, JWT, EF Core, DI"]
+        AuthMiddleware["JWT authentication middleware"]
+
+        subgraph Controllers["Controllers"]
+            HealthController["HealthController\nGET /api/health"]
+            AuthController["AuthController\nPOST /api/auth/register\nPOST /api/auth/login"]
+            ProductsController["ProductsController\nProtected Product CRUD API"]
+        end
+
+        subgraph Services["Services"]
+            AuthService["AuthService\npassword hashing\nJWT creation"]
+            ProductService["ProductService\nproduct business logic"]
+        end
+
+        subgraph DataLayer["Data layer"]
+            AppDbContext["AppDbContext\nEF Core DbContext"]
+            Migrations["EF Core migrations\nAddProduct\nAddUserAuth"]
+        end
+
+        subgraph Models["Models"]
+            User["User"]
+            Product["Product"]
+        end
+    end
+
+    subgraph Supabase["Supabase PostgreSQL"]
+        UsersTable[("Users table")]
+        ProductsTable[("Products table")]
+        MigrationTable[("__EFMigrationsHistory")]
+    end
+
+    Client -->|"HTTPS request"| Docker
+    Docker --> Program
+    Program --> AuthMiddleware
+
+    AuthMiddleware --> HealthController
+    AuthMiddleware --> AuthController
+    AuthMiddleware --> ProductsController
+
+    AuthController --> AuthService
+    ProductsController --> ProductService
+
+    AuthService --> AppDbContext
+    ProductService --> AppDbContext
+
+    AppDbContext --> User
+    AppDbContext --> Product
+    AppDbContext --> Migrations
+
+    AppDbContext -->|"Npgsql PostgreSQL connection"| UsersTable
+    AppDbContext -->|"Npgsql PostgreSQL connection"| ProductsTable
+    Migrations --> MigrationTable

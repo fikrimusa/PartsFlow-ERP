@@ -1,9 +1,8 @@
 # PartsFlow ERP
 
-PartsFlow ERP is a simple full-stack portfolio project for managing auto parts inventory.
+PartsFlow ERP is a full-stack inventory management portfolio project for auto parts businesses.
 
-The current MVP focuses on Product CRUD: create, view, update, delete, and identify low-stock products.
-Users can register and login before managing products.
+The current MVP provides authenticated product management, inventory dashboard summaries, and low-stock tracking. Users can register or log in, then create, view, update, delete, and monitor auto parts inventory through a Next.js frontend backed by an ASP.NET Core Web API and PostgreSQL database.
 
 ## Tech stack
 
@@ -13,6 +12,211 @@ Users can register and login before managing products.
 - API docs: Swagger / OpenAPI
 - Frontend: Next.js, TypeScript, Tailwind CSS
 - Container: Docker Compose
+
+## Architecture diagrams
+
+The architecture source diagrams live in `docs/architecture`:
+
+- `docs/architecture/full-architecture.mmd`
+- `docs/architecture/backend-architecture.mmd`
+- `docs/architecture/frontend-architecture.mmd`
+
+### Full architecture
+
+```mermaid
+flowchart TD
+    Browser["User browser"]
+
+    subgraph Frontend["Render Static Site\npartsflow-web.onrender.com"]
+        NextApp["Next.js static export\nTypeScript and Tailwind CSS"]
+        Login["Login page"]
+        Register["Register page\nhidden when registration disabled"]
+        Dashboard["Dashboard page"]
+        ProductsUI["Products page"]
+        ApiClient["Frontend API client\nsrc/lib/api.ts"]
+        TokenStore["localStorage\nJWT token"]
+    end
+
+    subgraph Backend["Render Web Service\npartsflow-erp.onrender.com"]
+        Docker["Dockerized ASP.NET Core Web API"]
+        Swagger["Swagger OpenAPI"]
+        Cors["CORS\nFRONTEND_URLS"]
+        JwtMiddleware["JWT middleware"]
+
+        AuthApi["Auth API\n/api/auth/register\n/api/auth/login"]
+        ProductApi["Product API\n/api/products\n/api/products/low-stock"]
+        HealthApi["Health API\n/api/health"]
+
+        AuthService["AuthService\nPBKDF2 password hashing\nJWT signing"]
+        ProductService["ProductService\nProduct CRUD rules"]
+        EfCore["AppDbContext\nEntity Framework Core"]
+    end
+
+    subgraph Database["Supabase PostgreSQL"]
+        Users[("Users\nemail, password hash")]
+        Products[("Products\ninventory data")]
+        History[("__EFMigrationsHistory")]
+    end
+
+    subgraph DeploymentConfig["Deployment environment variables"]
+        FrontendEnv["Frontend\nNEXT_PUBLIC_API_BASE_URL\nNEXT_PUBLIC_ALLOW_REGISTRATION"]
+        BackendEnv["Backend\nDATABASE_URL\nJWT_SECRET\nAPPLY_MIGRATIONS\nALLOW_REGISTRATION\nFRONTEND_URLS"]
+    end
+
+    Browser -->|"HTTPS"| NextApp
+    NextApp --> Login
+    NextApp --> Register
+    NextApp --> Dashboard
+    NextApp --> ProductsUI
+
+    Login -->|"login request"| ApiClient
+    Register -->|"register request if enabled"| ApiClient
+    Dashboard -->|"load product summary"| ApiClient
+    ProductsUI -->|"CRUD product requests"| ApiClient
+
+    ApiClient -->|"stores token after login/register"| TokenStore
+    TokenStore -->|"Authorization: Bearer JWT"| ApiClient
+    ApiClient -->|"HTTPS JSON API"| Docker
+
+    Docker --> Cors
+    Docker --> Swagger
+    Docker --> JwtMiddleware
+
+    JwtMiddleware --> HealthApi
+    JwtMiddleware --> AuthApi
+    JwtMiddleware --> ProductApi
+
+    AuthApi --> AuthService
+    ProductApi --> ProductService
+
+    AuthService --> EfCore
+    ProductService --> EfCore
+
+    EfCore -->|"Npgsql"| Users
+    EfCore -->|"Npgsql"| Products
+    EfCore -->|"migrations"| History
+
+    FrontendEnv --> ApiClient
+    BackendEnv --> Docker
+```
+
+### Backend architecture
+
+```mermaid
+flowchart TD
+    Client["Client\nNext.js frontend or Swagger"]
+
+    subgraph RenderBackend["Render Web Service: partsflow-erp"]
+        Docker["Docker container\nASP.NET Core Web API"]
+        Program["Program.cs\nCORS, Swagger, JWT, EF Core, DI"]
+        AuthMiddleware["JWT authentication middleware"]
+
+        subgraph Controllers["Controllers"]
+            HealthController["HealthController\nGET /api/health"]
+            AuthController["AuthController\nPOST /api/auth/register\nPOST /api/auth/login"]
+            ProductsController["ProductsController\nProtected Product CRUD API"]
+        end
+
+        subgraph Services["Services"]
+            AuthService["AuthService\npassword hashing\nJWT creation"]
+            ProductService["ProductService\nproduct business logic"]
+        end
+
+        subgraph DataLayer["Data layer"]
+            AppDbContext["AppDbContext\nEF Core DbContext"]
+            Migrations["EF Core migrations\nAddProduct\nAddUserAuth"]
+        end
+
+        subgraph Models["Models"]
+            User["User"]
+            Product["Product"]
+        end
+    end
+
+    subgraph Supabase["Supabase PostgreSQL"]
+        UsersTable[("Users table")]
+        ProductsTable[("Products table")]
+        MigrationTable[("__EFMigrationsHistory")]
+    end
+
+    Client -->|"HTTPS request"| Docker
+    Docker --> Program
+    Program --> AuthMiddleware
+
+    AuthMiddleware --> HealthController
+    AuthMiddleware --> AuthController
+    AuthMiddleware --> ProductsController
+
+    AuthController --> AuthService
+    ProductsController --> ProductService
+
+    AuthService --> AppDbContext
+    ProductService --> AppDbContext
+
+    AppDbContext --> User
+    AppDbContext --> Product
+    AppDbContext --> Migrations
+
+    AppDbContext -->|"Npgsql PostgreSQL connection"| UsersTable
+    AppDbContext -->|"Npgsql PostgreSQL connection"| ProductsTable
+    Migrations --> MigrationTable
+```
+
+### Frontend architecture
+
+```mermaid
+flowchart TD
+    User["User browser"]
+
+    subgraph RenderFrontend["Render Static Site: partsflow-web"]
+        StaticApp["Exported Next.js static app\nout directory"]
+
+        subgraph Pages["Pages"]
+            LoginPage["/login\nLogin page"]
+            RegisterPage["/register\nRegistration page"]
+            DashboardPage["/\nDashboard page"]
+            ProductsPage["/products\nProduct management page"]
+        end
+
+        subgraph FrontendLogic["Frontend logic"]
+            ApiClient["src/lib/api.ts\nfetch client"]
+            LocalStorage["Browser localStorage\nJWT token and user"]
+            Env["Build-time env\nNEXT_PUBLIC_API_BASE_URL\nNEXT_PUBLIC_ALLOW_REGISTRATION"]
+        end
+
+        subgraph UI["UI"]
+            Navigation["Navigation\nDashboard, Products, Logout"]
+            ProductForm["Product form\nCreate and edit"]
+            ProductTable["Product table\nLow stock badge"]
+            DashboardCards["Dashboard cards\nTotal products\nLow stock products\nTotal quantity"]
+        end
+    end
+
+    Backend["Render backend API\nhttps://partsflow-erp.onrender.com"]
+
+    User -->|"opens site"| StaticApp
+    StaticApp --> Pages
+
+    LoginPage --> ApiClient
+    RegisterPage --> ApiClient
+    DashboardPage --> ApiClient
+    ProductsPage --> ApiClient
+
+    LoginPage --> LocalStorage
+    RegisterPage --> LocalStorage
+    DashboardPage --> LocalStorage
+    ProductsPage --> LocalStorage
+
+    Env --> ApiClient
+    LocalStorage -->|"Authorization: Bearer JWT"| ApiClient
+    ApiClient -->|"HTTPS API calls"| Backend
+
+    DashboardPage --> Navigation
+    DashboardPage --> DashboardCards
+    ProductsPage --> Navigation
+    ProductsPage --> ProductForm
+    ProductsPage --> ProductTable
+```
 
 ## MVP features
 

@@ -1,0 +1,74 @@
+flowchart TD
+    Browser["User browser"]
+
+    subgraph Frontend["Render Static Site\npartsflow-web.onrender.com"]
+        NextApp["Next.js static export\nTypeScript and Tailwind CSS"]
+        Login["Login page"]
+        Register["Register page\nhidden when registration disabled"]
+        Dashboard["Dashboard page"]
+        ProductsUI["Products page"]
+        ApiClient["Frontend API client\nsrc/lib/api.ts"]
+        TokenStore["localStorage\nJWT token"]
+    end
+
+    subgraph Backend["Render Web Service\npartsflow-erp.onrender.com"]
+        Docker["Dockerized ASP.NET Core Web API"]
+        Swagger["Swagger OpenAPI"]
+        Cors["CORS\nFRONTEND_URLS"]
+        JwtMiddleware["JWT middleware"]
+
+        AuthApi["Auth API\n/api/auth/register\n/api/auth/login"]
+        ProductApi["Product API\n/api/products\n/api/products/low-stock"]
+        HealthApi["Health API\n/api/health"]
+
+        AuthService["AuthService\nPBKDF2 password hashing\nJWT signing"]
+        ProductService["ProductService\nProduct CRUD rules"]
+        EfCore["AppDbContext\nEntity Framework Core"]
+    end
+
+    subgraph Database["Supabase PostgreSQL"]
+        Users[("Users\nemail, password hash")]
+        Products[("Products\ninventory data")]
+        History[("__EFMigrationsHistory")]
+    end
+
+    subgraph DeploymentConfig["Deployment environment variables"]
+        FrontendEnv["Frontend\nNEXT_PUBLIC_API_BASE_URL\nNEXT_PUBLIC_ALLOW_REGISTRATION"]
+        BackendEnv["Backend\nDATABASE_URL\nJWT_SECRET\nAPPLY_MIGRATIONS\nALLOW_REGISTRATION\nFRONTEND_URLS"]
+    end
+
+    Browser -->|"HTTPS"| NextApp
+    NextApp --> Login
+    NextApp --> Register
+    NextApp --> Dashboard
+    NextApp --> ProductsUI
+
+    Login -->|"login request"| ApiClient
+    Register -->|"register request if enabled"| ApiClient
+    Dashboard -->|"load product summary"| ApiClient
+    ProductsUI -->|"CRUD product requests"| ApiClient
+
+    ApiClient -->|"stores token after login/register"| TokenStore
+    TokenStore -->|"Authorization: Bearer JWT"| ApiClient
+    ApiClient -->|"HTTPS JSON API"| Docker
+
+    Docker --> Cors
+    Docker --> Swagger
+    Docker --> JwtMiddleware
+
+    JwtMiddleware --> HealthApi
+    JwtMiddleware --> AuthApi
+    JwtMiddleware --> ProductApi
+
+    AuthApi --> AuthService
+    ProductApi --> ProductService
+
+    AuthService --> EfCore
+    ProductService --> EfCore
+
+    EfCore -->|"Npgsql"| Users
+    EfCore -->|"Npgsql"| Products
+    EfCore -->|"migrations"| History
+
+    FrontendEnv --> ApiClient
+    BackendEnv --> Docker
