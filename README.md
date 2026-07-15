@@ -24,6 +24,7 @@ The architecture source diagrams live in `docs/architecture`:
 ### Full architecture
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     Browser["User browser"]
 
@@ -103,6 +104,7 @@ flowchart TD
 ### Backend architecture
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     Client["Client\nNext.js frontend or Swagger"]
 
@@ -165,6 +167,7 @@ flowchart TD
 ### Frontend architecture
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TD
     User["User browser"]
 
